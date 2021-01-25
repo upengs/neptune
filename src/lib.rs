@@ -5,6 +5,7 @@ extern crate lazy_static;
 
 pub use crate::poseidon::{Arity, Poseidon};
 use crate::round_constants::generate_constants;
+use crate::round_numbers::calc_round_numbers;
 pub use bellperson::bls::Fr as Scalar;
 use bellperson::bls::FrRepr;
 pub use error::Error;
@@ -25,6 +26,7 @@ pub mod poseidon;
 mod poseidon_alt;
 mod preprocessing;
 mod round_constants;
+mod round_numbers;
 
 /// Hash types and domain separation tags.
 pub mod hash_type;
@@ -87,21 +89,19 @@ where
     }
 }
 
-// Round numbers for supported arities. Not all arities have been supplied.
-// If a new arity need be supported, the appropriate value should be included by running
-// the script: https://extgit.iaik.tugraz.at/krypto/hadeshash/blob/master/code/scripts/calc_round_numbers.py
+// Returns the round numbers for a given arity.
 fn round_numbers_base(arity: usize) -> (usize, usize) {
     let width = arity + 1;
 
     let full_rounds = 8;
     let partial_rounds = match width {
-        2 | 3 => 55,
-        4 | 5 | 6 | 7 => 56,
-        8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 => 57,
-        16 | 17 | 25 => 59,
-        37 => 60,
-        65 => 61,
-        _ => panic!(format!("unsupported arity, {}", arity)),
+        2..=3 => 55,
+        4..=7 => 56,
+        8..=15 => 57,
+        16..=31 => 59,
+        32..=62 => 60,
+        63..=124 => 61,
+        _ => return calc_round_numbers(width, true),
     };
 
     (full_rounds, partial_rounds)
