@@ -37,6 +37,15 @@ where
     tree_builder: TreeBuilder<TreeArity>,
 }
 
+unsafe impl<ColumnArity, TreeArity> Send
+for ColumnTreeBuilder<ColumnArity, TreeArity>
+    where
+        ColumnArity: Arity<Fr>,
+        TreeArity: Arity<Fr>,
+{
+
+}
+
 impl<ColumnArity, TreeArity> ColumnTreeBuilderTrait<ColumnArity, TreeArity>
     for ColumnTreeBuilder<ColumnArity, TreeArity>
 where
