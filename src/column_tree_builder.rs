@@ -6,6 +6,8 @@ use crate::{Arity, BatchHasher};
 use bellperson::bls::{Bls12, Fr};
 use ff::Field;
 use generic_array::GenericArray;
+use rayon::prelude::*;
+
 #[cfg(all(feature = "gpu", not(target_os = "macos")))]
 use rust_gpu_tools::opencl::GPUSelector;
 
@@ -46,6 +48,15 @@ for ColumnTreeBuilder<ColumnArity, TreeArity>
 
 }
 
+unsafe impl<ColumnArity, TreeArity> Sync
+for ColumnTreeBuilder<ColumnArity, TreeArity>
+    where
+        ColumnArity: Arity<Fr>,
+        TreeArity: Arity<Fr>,
+{
+
+}
+
 impl<ColumnArity, TreeArity> ColumnTreeBuilderTrait<ColumnArity, TreeArity>
     for ColumnTreeBuilder<ColumnArity, TreeArity>
 where
@@ -65,10 +76,12 @@ where
             Some(ref mut batcher) => {
                 batcher.hash_into_slice(&mut self.data[start..start + column_count], columns)?;
             }
-            None => columns.iter().enumerate().for_each(|(i, column)| {
-                self.data[start + i] =
-                    Poseidon::new_with_preimage(&column, &self.column_constants).hash();
-            }),
+            None => {
+                columns.iter().enumerate().for_each(| (i, column)|{
+                          self.data[start + i] =
+                          Poseidon::new_with_preimage(&column, &self.column_constants).hash();
+                });
+            },
         };
 
         self.fill_index += column_count;
