@@ -73,7 +73,7 @@ where
             }
             None => {
                 let mut data = Vec::with_capacity(columns.len());
-                columns.into_par_iter().try_for_each(|(i)| {
+                columns.into_par_iter().try_for_each(|i| {
                     let column = columns[i];
                     data[i] = Poseidon::new_with_preimage(&column, &self.column_constants).hash();
                 });
