@@ -63,7 +63,7 @@ where
                     data[i] = Poseidon::new_with_preimage(&column, &self.column_constants).hash();
                 });
 
-                columns.iter().enumerate().for_each(|(i, column)| {
+                columns.iter().enumerate().for_each(|(i, _column)| {
                     self.data[start + i] = data[i];
                 })
             }
