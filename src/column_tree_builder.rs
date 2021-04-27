@@ -6,6 +6,7 @@ use crate::{Arity, BatchHasher};
 use bellperson::bls::{Bls12, Fr};
 use ff::Field;
 use generic_array::GenericArray;
+use rayon::prelude::*;
 #[cfg(all(feature = "gpu", not(target_os = "macos")))]
 use rust_gpu_tools::opencl::GPUSelector;
 
@@ -56,10 +57,16 @@ where
             Some(ref mut batcher) => {
                 batcher.hash_into_slice(&mut self.data[start..start + column_count], columns)?;
             }
-            None => columns.iter().enumerate().for_each(|(i, column)| {
-                self.data[start + i] =
-                    Poseidon::new_with_preimage(&column, &self.column_constants).hash();
-            }),
+            None => {
+                let mut data = Vec::with_capacity(columns.len());
+                columns.into_par_iter().enumerate().map(|(i, parent)| {
+                    data[i] = Poseidon::new_with_preimage(&column, &self.column_constants).hash();
+                });
+
+                columns.iter().enumerate().for_each(|(i, column)| {
+                    self.data[start + i] = data[i];
+                })
+            }
         };
 
         self.fill_index += column_count;
