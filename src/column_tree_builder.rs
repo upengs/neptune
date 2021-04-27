@@ -59,11 +59,15 @@ where
             }
             None => {
                 let mut data = Vec::with_capacity(columns.len());
-                columns.into_par_iter().enumerate().map(|(i, column)| {
-                    data[i] = Poseidon::new_with_preimage(&column, &self.column_constants).hash();
-                });
+                columns
+                    .into_par_iter()
+                    .enumerate()
+                    .try_for_each(|(i, column)| {
+                        data[i] =
+                            Poseidon::new_with_preimage(&column, &self.column_constants).hash();
+                    });
 
-                columns.iter().enumerate().for_each(|(i, _column)| {
+                columns.iter().enumerate().for_each(|(i, _)| {
                     self.data[start + i] = data[i];
                 })
             }
